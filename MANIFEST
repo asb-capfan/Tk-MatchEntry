@@ -1,0 +1,5 @@
+MANIFEST
+Makefile.PL
+MatchEntry.pm
+test.pl
+README

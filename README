@@ -1,0 +1,52 @@
+Name:
+-----
+
+Tk::MatchEntry
+
+
+Description:
+------------
+
+Tk::MatchEntry is an Entry widget with focus on user-friendly auto-completion.
+
+With each character the user types in the widget, automatic completion can be 
+attempted based on a list of choices you as programmer specify.
+
+If there's more than one of the choices matching the text which the user has
+entered so far, she can optionally select the desired auto-completion choice
+from an up-popping listbox, either by using the mouse or by browsing them with
+the Up and Down cursor keys. 
+
+This listbox with auto-completion choices pops up automatically by default and
+only shows these choices which still can match the manually entered text, i.e.
+the number of displayed items usually decreases with the length of text entered
+by the user.
+
+The auto-completed part of the text in the Entry widget always gets selected so
+the next manually entered character overwrites it. Thus, the auto-completion
+feature never prevents the user from typing what she really wants to.
+
+
+Installation:
+-------------
+
+Use these commands to install the module manually:
+
+1. perl Makefile.PL
+2. make
+3. make test       (optional)
+4. make install
+
+To view the documentation after installation, use
+
+5. perldoc Tk::MatchEntry
+
+
+Feedback:
+---------
+
+Please send bug reports, comments and suggestions to 
+
+    Wolfgang Hommel <wolf (at) code-wizards.com>
+
+
