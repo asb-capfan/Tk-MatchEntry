@@ -27,6 +27,12 @@ the next manually entered character overwrites it. Thus, the auto-completion
 feature never prevents the user from typing what she really wants to.
 
 
+Notes:
+------
+
+Please see the ChangeLog file for changes between Tk::MatchEntry versions.
+
+
 Installation:
 -------------
 
@@ -40,6 +46,38 @@ Use these commands to install the module manually:
 To view the documentation after installation, use
 
 5. perldoc Tk::MatchEntry
+
+
+Usage example:
+--------------
+
+use Tk;
+use Tk::MatchEntry;
+
+my $mw = MainWindow->new(-title => "MatchEntry Test");
+
+my @choices = [ qw/one one.green one.blue one.yellow two.blue two.green
+                   two.cyan three.red three.white three.yellow/ ];
+
+$mw->Button->pack(-side => 'left');
+
+my $me = $mw->MatchEntry(
+        -choices        => @choices,
+        -fixedwidth     => 1, 
+#       -font           => "10x16",
+        -ignorecase     => 1,
+        -maxheight      => 5,
+        -entercmd       => sub { print "callback: -entercmd\n"; }, 
+        -onecmd         => sub { print "callback: -onecmd  \n"; }, 
+        -tabcmd         => sub { print "callback: -tabcmd  \n"; }, 
+        -zerocmd        => sub { print "callback: -zerocmd \n"; },
+    )->pack(-side => 'left', -padx => 50);
+
+$mw->Button(-text => 'popup', 
+            -command => sub{$me->popup}
+            )->pack(-side => 'left');
+ 
+MainLoop;
 
 
 Feedback:

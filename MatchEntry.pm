@@ -1,8 +1,8 @@
 #
 # MatchEntry.pm
 #
-# Revision       : $Revision: 1.4 $
-# Last changed on: $Date: 2003/01/29 16:56:20 $
+# Revision       : $Revision: 1.9 $
+# Last changed on: $Date: 2003/04/08 07:57:13 $
 #
 
 #
@@ -16,14 +16,14 @@ package Tk::MatchEntry;
 
 # Set version information
 use vars qw($VERSION);
-$VERSION = '0.1';
+$VERSION = '0.2';
 
 # Define dependencies
 use strict;
-use warnings;       # use warnings for debugging purposes
+# use warnings;       # use warnings for debugging purposes
 use Tk qw(Ev);
 use Carp;
-use Data::Dumper;   # for debugging
+# use Data::Dumper;   # for debugging
 require Tk::Frame;
 require Tk::LabEntry;
 
@@ -74,30 +74,40 @@ sub Populate {
                      DEFAULT  => $entry);
                  
     $self->ConfigSpecs(
-        -browsecmd  => [qw/CALLBACK browseCmd   BrowseCmd/,  undef],
-        -entercmd   => [qw/CALLBACK enterCmd    EnterCmd/,   undef],
-        -listcmd    => [qw/CALLBACK listCmd     ListCmd/,    undef],
-        -onecmd     => [qw/CALLBACK oneCmd      OneCmd/,     undef],
-        -tabcmd     => [qw/CALLBACK tabCmd      TabCmd/,     undef],
-        -zerocmd    => [qw/CALLBACK zeroCmd     ZeroCmd/,    undef],
-
-        -command    => '-browsecmd',
-        -ignorecase => '-case',
-        -options    => '-choices',
-        -variable   => '-textvariable',
-
-        -choices    => [qw/METHOD   choices     Choices/,    undef],
-        -state      => [qw/METHOD   state       State        normal/],
-        -popup      => [qw/METHOD   popup       Popup/,      undef],
+        -bottomcmd   => [qw/CALLBACK bottomCmd   BottomCmd/,  undef],
+        -browsecmd   => [qw/CALLBACK browseCmd   BrowseCmd/,  undef],
+        -entercmd    => [qw/CALLBACK enterCmd    EnterCmd/,   undef],
+        -listcmd     => [qw/CALLBACK listCmd     ListCmd/,    undef],
+        -mm_onecmd   => [qw/CALLBACK mm_oneCmd   mm_OneCmd/,  undef],
+        -mm_zerocmd  => [qw/CALLBACK mm_zeroCmd  mm_ZeroCmd/, undef],
+        -onecmd      => [qw/CALLBACK oneCmd      OneCmd/,     undef],
+        -sortcmd     => [qw/CALLBACK sortCmd     SortCmd/,    undef],
+        -tabcmd      => [qw/CALLBACK tabCmd      TabCmd/,     undef],
+        -topcmd      => [qw/CALLBACK topCmd      TopCmd/,     undef],
+        -zerocmd     => [qw/CALLBACK zeroCmd     ZeroCmd/,    undef],
         
-        -autopopup  => [qw/PASSIVE  autopopup   AutoPopup    1/],
-        -autoshrink => [qw/PASSIVE  autoshrink  AutoShrink   1/],
-        -case       => [qw/PASSIVE  case        Case         0/],
-        -colorstate => [qw/PASSIVE  colorState  ColorState/, undef],
-        -complete   => [qw/PASSIVE  complete    Complete     1/],
-        -fixedwidth => [qw/PASSIVE  fixedWidth  FixedWidth   1/],
-        -listwidth  => [qw/PASSIVE  listWidth   ListWidth/,  undef],
-        -maxheight  => [qw/PASSIVE  maxheight   MaxHeight    5/],
+        -command     => '-browsecmd',
+        -ignorecase  => '-case',
+        -options     => '-choices',
+        -variable    => '-textvariable',
+
+        -choices     => [qw/METHOD   choices     Choices/,    undef],
+        -state       => [qw/METHOD   state       State        normal/],
+        -popup       => [qw/METHOD   popup       Popup/,      undef],
+        
+        -autopopup   => [qw/PASSIVE  autoPopup   AutoPopup    1/],
+        -autoshrink  => [qw/PASSIVE  autoShrink  AutoShrink   1/],
+        -autosort    => [qw/PASSIVE  autoSort    AutoSort     1/],
+        -case        => [qw/PASSIVE  case        Case         0/],
+        -colorstate  => [qw/PASSIVE  colorState  ColorState/, undef],
+        -complete    => [qw/PASSIVE  complete    Complete     1/],
+        -fixedwidth  => [qw/PASSIVE  fixedWidth  FixedWidth   1/],
+        -listwidth   => [qw/PASSIVE  listWidth   ListWidth/,  undef],
+        -matchprefix => [qw/PASSIVE  matchPrefix MatchPrefix/,undef],
+        -maxheight   => [qw/PASSIVE  maxHeight   MaxHeight    5/],
+        -multimatch  => [qw/PASSIVE  multiMatch  MultiMatch   0/],
+        -sorttrigger => [qw/PASSIVE  sortTrigger SortTrigger/,undef],
+        -wraparound  => [qw/PASSIVE  wrapAround  WrapAround   0/],
 
         DEFAULT     => [[$entry, $scrolled_listbox]]
         );        
@@ -259,9 +269,30 @@ sub entry_anykey {
         $self->Callback(-onecmd => $self); 
     }
      
+    if ($self->cget(-multimatch)) {
+        if ($key =~ m/^Left|^Right|^Home|^End/) {
+            $self->hide_listbox;
+        } 
+    }
+
+    # print ">>>$key<<<\n";
+    my $trigger = $self->cget(-sorttrigger);
+    if (defined $trigger) {
+        $self->resort if ($key =~ m/$trigger/);
+    }
+
+    $self->{Configure}{was_real_input} = 0;
+    
     return if ($key =~ m/^Shift|^Control|^Left|^Right|^Home|^End/);
     return if ($state =~ m/^Control-/);
-        
+
+    $self->{Configure}{was_real_input} = 1;
+
+    # check whether we are in multimatch mode
+    if ($self->cget(-multimatch)) {
+        return $self->entry_anykey_multimatch($key, $state, $entry);
+    }
+    
     # automatically pop the listbox up if requested by programmer
     # and the user has already entered at least 1 character
     if ($self->cget(-autopopup) && length $entry->get) {
@@ -292,10 +323,70 @@ sub entry_anykey {
     
     $self->entry_autocomplete;    
 }
+
+# Handle any keypress in multimatch mode
+sub entry_anykey_multimatch {
+    my ($self, $key, $state, $entry) = @_;
+
+    # automatically pop the listbox up if requested by programmer
+    # and the user has already entered at least 1 character in the
+    # current word
+    
+    my $text = $entry->get;
+    my $cursor = $entry->index('insert');
+    (my $typed_text = $text) =~ s/^(.{$cursor})(.*)/$1/;
+    my $text_after_cursor = $2;
+     
+    (my $current_word = $typed_text) =~ s/.*\s(.*)/$1/;
+    
+    my $word_length = length $current_word;
+    if ($word_length == 0) {
+        $self->Callback(-mm_zerocmd => $self); 
+    }
+    elsif ($word_length == 1) {
+        $self->Callback(-mm_onecmd => $self); 
+    }
+    
+    # print "current word: $current_word\n";
+    
+    if ($self->cget(-autopopup) && length $current_word) {
+        if ($self->{popped}) { # already popped up, just filter entries
+            my $last_num = $self->{Configure}{last_number_of_entries};
+            my $num_entries = $self->listbox_filter($current_word);
+    
+            $num_entries = 0 unless (defined $num_entries);
+            
+            # number of choices has changed, redraw the listbox
+            unless ($last_num == $num_entries) {
+                $self->hide_listbox;
+                $self->show_listbox($current_word);
+            }
+        }
+        else { # pop the listbox up, automatically calls the filter
+            $self->show_listbox($current_word);
+        }
+    }
+    else { # check length of input, close listbox if too short
+        unless (length $current_word) {
+            $self->hide_listbox;
+        }
+    }
+
+    # Skip the rest if user pressed Backspace or Delete
+    return if ($key eq "BackSpace" or $key eq "Delete");
+    
+    $self->entry_autocomplete_multimatch;
+}
+
 # attempt to auto-complete the entry
 sub entry_autocomplete {
     my $self = shift;
     my $entry = $self->Subwidget('entry');
+    
+    # check whether we are in multimatch mode
+    if ($self->cget(-multimatch)) {
+        return $self->entry_autocomplete_multimatch;
+    }
     
     if ($self->cget(-complete)) { # do we want auto-completion at all?
         my $text = $entry->get;
@@ -319,13 +410,16 @@ sub entry_autocomplete {
             my $all_choices_r = $self->{Configure}{all_choices_r};
             my @all_choices = @$all_choices_r;
 
+            my $prefix = $self->cget(-matchprefix) || "";
+            
             my $index = 0;
             foreach my $choice (@all_choices) { # @all_choices is sorted
-                if ($choice =~ m/^$ignore_case\Q$typed_text\E(.*)/) {
+                if ($choice =~ m/^${ignore_case}$prefix\Q$typed_text\E(.*)/) {
                     my $choice_tail = $1; # auto-completed part of entry
+
+                    #print "..$choice_tail..\n";
+                    
                     $entry->selection('clear');
-                    #$entry->delete(0, 'end');
-                    #$entry->insert(0, $choice);
                     $entry->delete($cursor, 'end');
                     $entry->insert($cursor, $choice_tail);
                     $entry->selection('range', $cursor, 'end');
@@ -338,12 +432,66 @@ sub entry_autocomplete {
     }
 }
 
-# open and focus the listbox
-sub open_and_focus_listbox {
+# attempt to auto-complete the current word in multimatch mode
+sub entry_autocomplete_multimatch {
     my $self = shift;
-    $self->open_listbox;                        # open the listbox
-    $self->{'savefocus'} = $self->focusCurrent; # save focus for later restore
-    $self->Subwidget('slistbox')->focus;        # focus the listbox
+    my $entry = $self->Subwidget('entry');
+
+    if ($self->cget(-complete)) { # do we want auto-completion at all?
+        my $text = $entry->get;
+        my $cursor = $entry->index('insert');
+        (my $typed_text = $text) =~ s/^(.{$cursor})(.*)/$1/;
+        my $text_after_cursor = $2;
+        
+        my $rest_of_line = '';
+        # check whether the user is editing a word which is not the
+        # last on the line
+        if ($text_after_cursor =~ m/\s/) {
+            ($rest_of_line = $text_after_cursor) =~ s/(.*?)\s(.*)/$2/;
+            $text_after_cursor = $1;
+        }
+
+        # extract last word on line
+        if ($typed_text =~ m/\s/) {
+            $typed_text =~ s/.*\s(.*)/$1/;
+        }
+        
+        # check whether any text after insert cursor is from auto-completion
+        my $non_auto_text;
+        $non_auto_text = 1 if ($text_after_cursor ne "");
+        if ($non_auto_text && $entry->selectionPresent) {
+            $non_auto_text = 0
+                if (($entry->index('end') == $entry->index('sel.last')) && 
+                    ($entry->index('insert') == $entry->index('sel.first')));
+        }
+        
+        # skip if position = 0 or there's text after the insert cursor
+        unless($typed_text eq "" || $non_auto_text) {
+            # search for the first matching entry
+            my $ignore_case = ($self->cget(-case) ? "(?i)" : "");
+            my $all_choices_r = $self->{Configure}{all_choices_r};
+            my @all_choices = @$all_choices_r;
+
+            my $prefix = $self->cget(-matchprefix) || "";
+            
+            my $index = 0;
+            foreach my $choice (@all_choices) { # @all_choices is sorted
+                if ($choice =~ m/^${ignore_case}$prefix\Q$typed_text\E(.*)/) {
+                    my $choice_tail = $1; # auto-completed part of entry
+                    $entry->selection('clear');
+                    $entry->delete($cursor, 'end');
+                    $entry->insert($cursor, $choice_tail);
+                    $entry->selection('range', $cursor, 'end');
+                    if (length $rest_of_line) {
+                        $entry->insert('end', " " . $rest_of_line);
+                    }
+                    $entry->icursor($cursor);
+
+                    last; # break out of foreach $choice
+                }
+            }    
+        }
+    } 
 }
 
 # called when the <Down> key is pressed within the entry
@@ -352,17 +500,40 @@ sub entry_cursor_down {
     my $listbox = $self->Subwidget('slistbox')->Subwidget('listbox');
     my $entry = $self->Subwidget('entry');
     
+    $self->{Configure}{was_real_input} = 0;
+ 
     my $index;
     # unless it's already there, open the listbox and focus first entry
     unless($self->{popped}) {
-        $self->open_listbox;
+        if ($self->cget(-multimatch)) {
+            my $text = $entry->get;
+            my $cursor = $entry->index('insert');
+            (my $typed_text = $text) =~ s/^(.{$cursor})(.*)/$1/;
+            (my $current_word = $typed_text) =~ s/.*\s(.*)/$1/;
+            $self->open_listbox($current_word);
+        }
+        else {
+            $self->open_listbox;
+        } 
+
         $listbox->selection('clear', 0, 'end');
         $listbox->selectionSet(0);
         $listbox->activate(0);        
         $index = 0;
     }
     else { # otherwise move selection one down, unless already at bottom
-        $self->listbox_filter;
+        
+        if ($self->cget(-multimatch)) {
+            my $text = $entry->get;
+            my $cursor = $entry->index('insert');
+            (my $typed_text = $text) =~ s/^(.{$cursor})(.*)/$1/;
+            (my $current_word = $typed_text) =~ s/.*\s(.*)/$1/;
+            $self->listbox_filter($current_word);
+        }
+        else {
+            $self->listbox_filter;
+        } 
+        
         $index = $self->listbox_index;
         if ($index < $self->{Configure}{last_number_of_entries} - 1) {
             $index++;
@@ -373,6 +544,15 @@ sub entry_cursor_down {
             $listbox->selection('clear', 0, 'end');
             $listbox->selectionSet($index);
             $listbox->activate($index);
+        }
+        else {
+            $self->Callback(-bottomcmd => $self); 
+            if ($self->cget(-wraparound)) {
+                $index = 0;
+                $listbox->selection('clear', 0, 'end');
+                $listbox->selectionSet($index);
+                $listbox->activate($index);               
+            }
         }
     }
 
@@ -388,19 +568,50 @@ sub entry_cursor_up {
      
     my $index;
     
+    $self->{Configure}{was_real_input} = 0;
+ 
     # unless it's already there, open the listbox and focus first entry
     unless($self->{popped}) {
-        $self->open_listbox;
+
+        if ($self->cget(-multimatch)) {
+            my $text = $entry->get;
+            my $cursor = $entry->index('insert');
+            (my $typed_text = $text) =~ s/^(.{$cursor})(.*)/$1/;
+            (my $current_word = $typed_text) =~ s/.*\s(.*)/$1/;
+            $self->open_listbox($current_word);
+        }
+        else {
+            $self->open_listbox;
+        } 
+ 
         $listbox->selection('clear', 0, 'end');
         $listbox->selectionSet(0);
         $listbox->activate(0);        
         $index = 0;
     }
     else { # otherwise move selection one up, unless already at top
-        $self->listbox_filter;
+        if ($self->cget(-multimatch)) {
+            my $text = $entry->get;
+            my $cursor = $entry->index('insert');
+            (my $typed_text = $text) =~ s/^(.{$cursor})(.*)/$1/;
+            (my $current_word = $typed_text) =~ s/.*\s(.*)/$1/;
+            $self->listbox_filter($current_word);
+        }
+        else {
+            $self->listbox_filter;
+        } 
         $index = $self->listbox_index;
         if ($index > 0) {
             $index--;
+        }
+        else {
+            $self->Callback(-topcmd => $self); 
+            if ($self->cget(-wraparound)) {
+                $index = $self->{Configure}{last_number_of_entries} - 1;
+                $listbox->selection('clear', 0, 'end');
+                $listbox->selectionSet($index);
+                $listbox->activate($index);               
+            }
         }
         
         $listbox->selection('clear', 0, 'end');
@@ -417,8 +628,56 @@ sub entry_cursor_up {
 sub entry_select_from_cursor_to_end {
     my $self = shift;
     my $entry = $self->Subwidget('entry');
-    $entry->selectionRange($entry->index('insert'),
-                           $entry->index('end')); 
+
+    # set insertion cursor to begin of line if the last listbox
+    # filtering process was successful only because of -matchprefix
+    # (beginning of current word in multi-match mode)
+
+    if ($self->{Configure}{last_filter_matched_by_prefix_only}) {
+        if ($self->cget(-multimatch)) {
+            my $pos = $entry->index('insert');
+            (my $text = $entry->get) =~ s/^(.{$pos})/$1/;
+            $text =~ s/(.*)\s.*/$1/;
+            # print $text."\n";
+            # print "..." . length $text , "\n(of $pos)\n";
+            if (length $text > $pos) {
+                if ($text =~ m/(.{$pos})/) {
+                    my $t = $1;
+                    $t =~ s/(.*)\s.*/$1/;
+                    # print "...$t\n";
+                    $entry->icursor(1 + length $t);
+                }
+                else {
+                    $entry->icursor($pos);
+                }
+            }
+            else {
+                $entry->icursor(1 + length $text);  
+            }
+        }
+        else {
+            $entry->icursor(0);
+        }
+    }
+        
+    if ($self->cget(-multimatch)) {
+        my $pos = $entry->index('insert');
+        (my $text = $entry->get) =~ s/^.{$pos}(.*)/$1/;
+        if ($text =~ m/\s/g) {
+            $pos += pos($text) - 1;
+            # print "spacematch: $text\n";
+        }
+        else {
+            $pos = $entry->index('end');
+        }
+        # print "pps: $pos\n";
+        $entry->selectionRange($entry->index('insert'),
+                               $pos); 
+    }
+    else {
+        $entry->selectionRange($entry->index('insert'),
+                               $entry->index('end')); 
+    }
 }
     
 # called when mouse button 1 is released within the listbox
@@ -430,12 +689,14 @@ sub release_listbox {
 # allows the programmer to popup the listbox if auto-popup is disabled
 sub popup {
     my $self = shift;
-    $self->open_listbox;
+    my $current_word = shift; # optional, introduced with multi-matching
+    $self->open_listbox($current_word);
 }
 
 # hide/unhide the popup listbox
 sub open_listbox {
-    my ($self) = @_;
+    my $self = shift;
+    my $current_word = shift; # optional, introduced with multi-matching
 
     # check whether we are in state "disabled"
     return if ($self->cget('-state') eq 'disabled');
@@ -444,7 +705,7 @@ sub open_listbox {
         $self->close_listbox;
     }
     else {
-        $self->show_listbox;
+        $self->show_listbox($current_word);
     }
 }
 
@@ -452,6 +713,8 @@ sub open_listbox {
 # input anymore.
 sub listbox_filter {
     my $self = shift;
+    my $text_to_match = shift; # optional, introduced with multimatching
+    
     my $listbox = $self->Subwidget('slistbox')->Subwidget('listbox');
     my $entry = $self->Subwidget('entry');
 
@@ -470,20 +733,83 @@ sub listbox_filter {
  
     my $text = $entry->get;
     (my $typed_text = $text) =~ s/^(.{$cursor_pos})(.*)/$1/;
-    if ($2 ne "") { # text after cursor
-        # only use matching if whole text matches one of the choices
-        my $text_is_choice = 0;
-        foreach my $choice (@all_choices) {
-            if ($text =~ m/^$ignore_case\Q$choice\E$/) {
-                $text_is_choice++;
+    my $rest_of_line = $2;
+
+    my $prefix = $self->cget(-matchprefix) || "";        
+
+    my $force_match = '';
+    if (length $self->{Configure}{last_user_input}) {
+        $force_match = $self->{Configure}{last_user_input};
+    }
+    
+    unless (defined $text_to_match) {
+        if ($rest_of_line ne "") { # text after cursor
+            # only use matching if whole text matches one of the choices
+            my $text_is_choice = 0;
+
+            foreach my $choice (@all_choices) {
+                if ($text =~ m/^${ignore_case}\Q$choice\E$/) {
+                    $text_is_choice++;
+                }
+            }
+
+            # give it a try for sure if we have a match-prefix
+            $self->{Configure}{last_filter_matched_by_prefix_only} = 0;
+            if ($text_is_choice == 0) {
+                if (length $prefix) {
+                    $self->{Configure}{last_filter_matched_by_prefix_only} = 1;
+                    $text_is_choice++;
+                }
+            }
+
+            return unless ($text_is_choice);
+        }
+    } 
+    else { # multimatch mode or $text_to_match otherwise specified
+        # print "text to match: $text_to_match\n";
+        $typed_text = $text_to_match;
+
+        if (length $typed_text) {
+            # check whether the text typed by the user can match
+            # any of the choices,
+            # a) as it is
+            # b) at least with the match-prefix
+            my $text_is_choice = 0;
+            foreach my $choice (@all_choices) {
+                if ($choice =~ m/^${ignore_case}\Q$typed_text\E/) {
+                    $text_is_choice++;
+                }
+            }
+            # give it a try for sure if we have a match-prefix
+            $self->{Configure}{last_filter_matched_by_prefix_only} = 0;
+            if ($text_is_choice == 0) {
+                if (length $prefix) {
+                    $self->{Configure}{last_filter_matched_by_prefix_only} = 1;
+                    $text_is_choice++;
+                }
             }
         }
-        return unless ($text_is_choice);
     }
 
+    if ($self->{Configure}{last_filter_matched_by_prefix_only}) {
+        $self->{Configure}{last_user_input} = $typed_text;
+    }
+    else {
+        $self->{Configure}{last_user_input} = '';
+    }
+    
+    # print "real input: . " . $self->{Configure}{was_real_input} . "\n";
+    
+    if (length $force_match) {
+        $typed_text = $force_match
+            unless($self->{Configure}{was_real_input});
+        $self->{Configure}{last_user_input} = $typed_text
+            unless($self->{Configure}{was_real_input});
+    }
+    
     my $index = 0;
     foreach my $choice (@all_choices) { # @all_choices is sorted
-        if ($choice =~ m/^$ignore_case\Q$typed_text\E/) {
+        if ($choice =~ m/^${ignore_case}$prefix\Q$typed_text\E/) {    
             $listbox->insert('end', $choice);
             if (defined $old_value && ($old_value eq $choice)) {
                 $new_index = $index;
@@ -504,7 +830,8 @@ sub listbox_filter {
 
 # Display the listbox
 sub show_listbox {
-    my ($self) = @_;
+    my $self = shift;
+    my $current_word = shift; # optional
 
     # Don't do that stuff if we're already popped up
     unless ($self->{'popped'}) {
@@ -512,7 +839,7 @@ sub show_listbox {
         $self->Callback(-listcmd => $self); 
 
         # Display only listbox entries which could match
-        my $number_of_visible_elements = $self->listbox_filter;
+        my $number_of_visible_elements = $self->listbox_filter($current_word);
         
         # abort if listbox would be empty or contain less entries
         # than required for auto-completion (usually 1)
@@ -656,7 +983,42 @@ sub listbox_copy_to_entry {
         $self->{'curIndex'} = $index;
         my $listbox = $self->Subwidget('slistbox')->Subwidget('listbox');
         my $var_ref = $self->cget('-textvariable');
-        $$var_ref = $listbox->get($index);
+    
+        if ($self->cget(-multimatch)) {
+            my $entry = $self->Subwidget('entry');
+
+            my $pos = $entry->index('insert');
+            my $text = $entry->get; 
+            if ($text =~ m/^(.{$pos})(.*)/) {
+                my $text_before = $1;
+                my $text_behind = $2;
+
+                if ($text_before =~ m/\s/) {
+                    $text_before =~ s/(.*)\s.*/$1/;
+                }
+                else {
+                    $text_before = "";
+                }
+
+                if ($text_behind =~ m/\s/) {
+                    $text_behind =~ s/.*?\s(.*)/$1/;
+                }
+                else {
+                    $text_behind = "";
+                }
+                
+                my $newvalue;
+                $newvalue .= $text_before . " " if (length $text_before);
+                $newvalue .= $listbox->get($index);
+                $newvalue .= " " . $text_behind if (length $text_behind);
+
+                $$var_ref = $newvalue;
+                $entry->icursor($pos); # ?
+            }
+        } 
+        else {
+            $$var_ref = $listbox->get($index);
+        }
     }
 }
 
@@ -713,30 +1075,37 @@ sub choices {
     my ($self, $choices) = @_;
 
     if (@_ > 1) { # set them
-=for compatibility.browseentry
-        $self->delete(qw/0 end/); # delete old entries
-        my %h;
-        my $var = $self->cget('-textvariable');
-        my $old = $$var;
-
-        foreach my $val (@$choices) {
-            $self->insert('end', $val);
-            $h{$val} = 1;
-        }
-
-        $old = (@$choices) ? $choices->[0] : undef 
-            unless exists $h{$old};
-
-            # don't change old entry content (as opposed to Tk::BrowseEntry)
-            # $$var = $old; 
-=cut
         # remember all the possible choices given by the programmer
-        my @all_choices = sort @$choices;
-        $self->{Configure}{all_choices_r} = \@all_choices;
+        if ($self->cget(-autosort)) {
+            my @c = @$choices;
+            my @all_choices = $self->Callback(-sortcmd => \@c) || 
+                              sort @c;
+            $self->{Configure}{all_choices_r} = \@all_choices;
+        }
+        else {
+            my @unsorted_choices = @$choices;
+            $self->{Configure}{all_choices_r} = \@unsorted_choices;
+        }
     }
     else { # get them
         return ($self->get(qw/0 end/));
     }       
+}
+
+sub resort {
+    my $self = shift;
+
+    my $all_choices_r = $self->{Configure}{all_choices_r};
+    my @choices = @$all_choices_r;
+ 
+    my $nocallback = 0;
+    $self->{Configure}{all_choices_r} = 
+            $self->Callback(-sortcmd => \@choices) or $nocallback = 1;
+
+    if ($nocallback) {
+        my @sorted_choices = sort @choices;
+        $self->{Configure}{all_choices_r} = \@sorted_choices;
+    }
 }
 
 # Lets the programmer get/set the widget's state
@@ -790,9 +1159,10 @@ Tk::MatchEntry - Entry widget with advanced auto-completion capability
 
 =head1 SYNOPSIS
 
-use Tk::MatchEntry;
+ use Tk::MatchEntry;
 
-$match_entry = $top->MatchEntry(-textvariable => \$var1, -choices => @choices);
+ $match_entry = $top->MatchEntry(-textvariable => \$var1, 
+                                 -choices => @choices);
 
 =head1 DESCRIPTION
 
@@ -817,6 +1187,12 @@ The auto-completed part of the text in the Entry widget always gets
 selected so the next manually entered character overwrites it. Thus, 
 the auto-completion feature never prevents the user from typing 
 what she really wants to.
+
+Starting with version 0.2, C<Tk::MatchEntry> has a multi-match mode in which 
+each word the user types can be auto-completed. For example, if you've got the
+four B<choices> I<Another>, I<Hacker>, I<Just> and I<Perl>, the user can write
+I<Just Another Perl Hacker> for example by hitting J, Return, A, Return, P, 
+Return, H, Return.
 
 =head1 OPTIONS
 
@@ -884,6 +1260,96 @@ calculated the same way as in C<Tk::BrowseEntry>. Defaults to 1.
 If B<-fixedwidth> is set to 0, B<-listwidth> can be used to specify
 the popup listbox's width.
 
+=item B<-multimatch>
+
+When set to a true value, the multi-match mode is activated. In
+regular mode, C<Tk::MatchEntry> attempts to match and auto-complete
+the whole text in the entry widget. In multi-match mode, it does
+the same for each word the user enters. Don't use this unless you're
+sure that's what you want. When using multi-match mode, the B<choices>
+should be single words (as opposed to phrases, i.e. multiple 
+blank-separated words). Defaults to 0.
+
+=item B<-autosort>
+
+When set to a true value, the B<choices> are automatically sorted,
+either when set through -choices in the B<new> method or through the
+B<choices> method. Sorting is done with Perl's built-in B<sort>
+function unless you've specified a B<-sortcmd> callback.
+Defaults to 1.
+
+=item B<-sorttrigger>
+
+Useful in multi-match mode when using a custom B<-sortcmd> callback
+which sorts the B<choices> based on what the user has entered so far.
+B<-sorttrigger> is a regular expression; if it matches against the
+user's latest pressed key, then the B<resort> method is called.
+The B<-sortcmd> callback can then be used to add words entered by the
+user to the list of choices, sort them by usage frequency, etc.
+
+The value of this option defaults to B<undef> and you should only
+change it if you know what you're doing: both matching this regular
+expression against each key pressed by the user and unnecessarily
+often calling B<resort> can decrease performance.
+
+Example usage:
+
+ ...
+ -sorttrigger => '^Left|^Right|^space|^Home|^End',
+ ...
+ 
+(The lower case s in I<^space> is actually not a typo)
+
+=item B<-matchprefix>
+
+Using a match prefix allows lazy typing on your user's side. It's best
+explained by comparing it to the field where you enter a URL in modern
+web browsers. Let's say you have a choice
+
+ http://www.cpan.org
+
+and you would like to allow the user typing either of these:
+
+ http://www.cpan.org
+ www.cpan.org
+ cpan.org
+
+while still getting the benefits of auto-completion and the up-popping 
+choices listbox, then you should set B<-matchprefix> to
+
+ '(?:http:\/\/)?(?:www\.)?'
+
+In fact, B<-matchprefix> is a regular expression which B<must> fulfill
+the following criteria:
+
+1) You B<must> use non-capturing brackets if you're using grouping.
+That's why we use 
+
+ (?:http:\/\/)?
+
+in the above example and B<NOT>
+
+ (http:\/\/)?
+
+2) Prefix matches B<must> be optional, i.e. you always should use 
+the ? quantifier (using * would work, too, but might be bad for 
+performance).
+
+Here's another example for matching HTTP and FTP URLs like in the above
+example, i.e. both the I<http://> and I<www.> parts are optional.
+
+ ...
+ -matchprefix => '(?:(?:ftp|http):\/\/)?(?:(?:ftp|www)\.)?',
+ ...
+
+=item B<-wraparound>
+
+If set to a true value, then the selection in the popup listbox will
+wrap around to the first entry if the user presses the down cursor key
+at the very bottom of the listbox. Also, the last entry in the listbox 
+will be selected after pressing cursor-up while having the first
+listbox entry selected. Defaults to 0.
+ 
 =back
 
 The following options specify callbacks:
@@ -930,6 +1396,44 @@ from his address book.
 Executed when the user has selected an entry from the auto-completion 
 popup-listbox. Provided for compatibility with C<Tk::BrowseEntry>.
 
+=item B<-mm_zerocmd> and B<-mm_onecmd>
+
+Same as B<-zerocmd> and B<-onecmd>, additionally called in B<multimatch>
+mode if the current word's length is 0, or 1 respectively.
+
+=item B<-sortcmd>
+
+Callback used to sort the array of B<choices>. If you don't specify
+this callback, Perl's internal B<sort> function will be used to
+sort the B<choices> alphabetically unless B<autosort> is turned off.
+
+A reference to the array of choices is passed to the custom sorting 
+function and it must return a reference to the sorted array.
+
+Trivial example:
+
+ sub mysort {
+     my $ref = shift;
+     my @choices = @$ref;
+     my @sorted_choices = sort @choices;
+     return \@sorted_choices;
+ }
+
+You can abuse this callback to insert or delete choices while sorting
+them. Normally, the standard B<choices> method is used to update the
+choices array, of course.
+
+=item B<-bottomcmd>
+
+Called when the user presses the cursor-down key if the bottom
+entry in the popup listbox was already selected. Can be used for 
+accoustic signals etc. Called even if B<-wraparound> is true.
+
+=item B<-topcmd>
+
+Same as B<-bottomcmd> but called when the user presses the cursor-up key
+if already at the first entry of the popup listbox.
+
 =back
 
 =head1 METHODS
@@ -946,6 +1450,24 @@ listbox, you might want to use a button of your own for this
 purpose.
 
 If the listbox is already open, calling this method closes it.
+
+=item B<choices>
+
+If called with no parameter, this returns an array containing the current
+B<choices>.
+
+If given an array as parameter, it will set the B<choices>. Unless
+B<autosort> is turned off, the choices will be sorted automatically,
+either using Perl's built-in B<sort> function or the B<-sortcmd> callback
+you've specified. 
+
+=item B<resort>
+
+Enforces re-sorting the array of choices, either using Perl's built-in
+B<sort> function or the B<-sortcmd> callback if you've specified one.
+Useful if B<autosort> is turned off or your custom B<-sortcmd> wants
+to take into account what the user has entered so far, for instance
+to sort the choices by their usage frequency in multi-match mode.
 
 =back
 
@@ -977,13 +1499,20 @@ to remove the auto-completed C< Doe> part.
 
 =head1 NOTES
 
-The B<-choices> are automatically sorted alphabetically.
+If you need to configure the subwidgets, for example to set different
+background colors for the entry and the listbox widget, you can access 
+them like this:
 
-=head1 BUGS/TODO
+ my $entry_subwidget = $matchentry->Subwidget('entry');
+
+ my $listbox_subwidget = 
+    $matchentry->Subwidget('slistbox')->Subwidget('listbox');
+
+C<slistbox> is the C<scrolled> listbox.
+    
+=head1 BUGS
 
 =over 4
-
-=item There should be a way to influence how the choices are sorted.
 
 =item Execution of the -browsecmd callback needs improvement.
 
@@ -994,21 +1523,20 @@ The B<-choices> are automatically sorted alphabetically.
 This is a primitive example for Tk::MatchEntry which you can use to get to
 know the look and feel.
 
-use Tk;
+ use Tk;
 
-use Tk::MatchEntry;
+ use Tk::MatchEntry;
 
-my $mw = MainWindow->new(-title => "MatchEntry Test");
+ my $mw = MainWindow->new(-title => "MatchEntry Test");
 
-my @choices = [ qw/one one.green one.blue one.yellow two.blue two.green
-                   two.cyan three.red three.white three.yellow/ ];
+ my @choices = [ qw/one one.green one.blue one.yellow two.blue two.green
+                    two.cyan three.red three.white three.yellow/ ];
 
-$mw->Button->pack(-side => 'left');
+ $mw->Button->pack(-side => 'left');
 
-my $me = $mw->MatchEntry(
+ my $me = $mw->MatchEntry(
         -choices        => @choices,
         -fixedwidth     => 1, 
-#       -font           => "10x16",
         -ignorecase     => 1,
         -maxheight      => 5,
         -entercmd       => sub { print "callback: -entercmd\n"; }, 
@@ -1017,11 +1545,11 @@ my $me = $mw->MatchEntry(
         -zerocmd        => sub { print "callback: -zerocmd \n"; },
     )->pack(-side => 'left', -padx => 50);
 
-$mw->Button(-text => 'popup', 
-            -command => sub{$me->popup}
+ $mw->Button(-text => 'popup', 
+             -command => sub{$me->popup}
             )->pack(-side => 'left');
  
-MainLoop;
+ MainLoop;
 
 =head1 AUTHOR
 
@@ -1029,21 +1557,33 @@ Wolfgang Hommel <wolf (at) code-wizards.com>
 
 =head1 SEE ALSO
 
-The following widgets are similar to Tk::MatchEntry to a certain extent:
+The following widgets are similar to I<Tk::MatchEntry> to a certain extent:
 
 =over 4
 
-=item Tk::BrowseEntry - basic combination of entry and listbox widgets
+=item I<Tk::BrowseEntry>
 
-=item Tk::HistEntry by Slaven Rezic - excellent readline-like entry
-widget with basic auto-completion capability.
+=item I<Tk::HistEntry> 
+
+=item I<Tk::JBrowseEntry>
+
+=item I<Tk::SelectionEntry>
 
 =back
 
 =head1 CREDITS
 
-Thanks to Slaven Rezic for Tk::HistEntry. Some of the auto-completion 
-ideas are based on it.
+Thanks to 
+
+=over 4
+
+=item Slaven Rezic for I<Tk::HistEntry>. Some of the auto-completion ideas are 
+based on it.
+
+=item Jesse Farinacci for suggesting, specifying and testing the multimatch 
+mode.
+
+=back
 
 =head1 COPYRIGHT
 
@@ -1057,6 +1597,21 @@ it under the same terms as Perl itself.
 #
 # CVS Changelog:
 # $Log: MatchEntry.pm,v $
+# Revision 1.9  2003/04/08 07:57:13  admin
+# added -wraparound and -bottomcmd/-topcmd callbacks
+#
+# Revision 1.8  2003/04/08 07:35:46  admin
+# Added -matchprefix option and behavior
+#
+# Revision 1.7  2003/04/06 20:08:16  admin
+# Added -sorttrigger, updated POD
+#
+# Revision 1.6  2003/04/06 12:20:11  admin
+# Added multimatch mode, -sortcmd callback
+#
+# Revision 1.5  2003/01/30 15:08:01  admin
+# Added POD, added <FocusOut> bind
+#
 # Revision 1.4  2003/01/29 16:56:20  admin
 # Improved support for case-insensitive matching, added 0/1-length callbacks
 #

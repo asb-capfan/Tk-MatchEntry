@@ -24,6 +24,7 @@ MANIFEST
 Makefile.PL
 $pm.pm
 test.pl
+ChangeLog
 README
 end-of-manifest
 print MANIFEST "$widtrib\n" if $widtrib;

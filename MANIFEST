@@ -2,4 +2,5 @@ MANIFEST
 Makefile.PL
 MatchEntry.pm
 test.pl
+ChangeLog
 README
