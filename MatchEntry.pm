@@ -1,8 +1,8 @@
 #
 # MatchEntry.pm
 #
-# Revision       : $Revision: 1.9 $
-# Last changed on: $Date: 2003/04/08 07:57:13 $
+# Revision       : $Revision: 1.11 $
+# Last changed on: $Date: 2005/03/14 21:20:17 $
 #
 
 #
@@ -16,7 +16,7 @@ package Tk::MatchEntry;
 
 # Set version information
 use vars qw($VERSION);
-$VERSION = '0.2';
+$VERSION = '0.3';
 
 # Define dependencies
 use strict;
@@ -501,6 +501,7 @@ sub entry_cursor_down {
     my $entry = $self->Subwidget('entry');
     
     $self->{Configure}{was_real_input} = 0;
+    # print "entry_cursor_down\n";
  
     my $index;
     # unless it's already there, open the listbox and focus first entry
@@ -522,7 +523,7 @@ sub entry_cursor_down {
         $index = 0;
     }
     else { # otherwise move selection one down, unless already at bottom
-        
+        # print "one down\n";        
         if ($self->cget(-multimatch)) {
             my $text = $entry->get;
             my $cursor = $entry->index('insert');
@@ -1025,7 +1026,14 @@ sub listbox_copy_to_entry {
 # Return the index of the currently selected listbox item
 sub listbox_index {
     my ($self, $flag) = @_;
-    my $sel = $self->Subwidget('slistbox')->Subwidget('listbox')->curselection;
+    my @sel = $self->Subwidget('slistbox')->Subwidget('listbox')->curselection;
+    my $sel;
+    if (defined($sel[0])) {
+        $sel = $sel[0];
+    }
+    else {
+        # undef $sel;
+    }
     if (defined $sel) {
         return int($sel);
     }
@@ -1057,7 +1065,12 @@ sub hide_listbox {
 # User pressed <Return> in the listbox
 sub return_listbox {
     my ($self, $listbox) = @_;
-    my ($x, $y) = $listbox->bbox($listbox->curselection);
+    my @sel = $self->Subwidget('slistbox')->Subwidget('listbox')->curselection;
+    my $sel;
+    $sel = $sel[0] if (defined($sel[0]));
+    return unless (defined($sel));
+    
+    my ($x, $y) = $listbox->bbox($sel);
     $self->choose_listbox($x, $y);
 
     # place insert cursor at end of entry widget
@@ -1587,7 +1600,7 @@ mode.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2003 Wolfgang Hommel. All rights reserved.
+Copyright (c) 2003 - 2005 Wolfgang Hommel. All rights reserved.
 
 This package is free software; you can redistribute it and/or modifiy
 it under the same terms as Perl itself.
@@ -1597,6 +1610,12 @@ it under the same terms as Perl itself.
 #
 # CVS Changelog:
 # $Log: MatchEntry.pm,v $
+# Revision 1.11  2005/03/14 21:20:17  admin
+# Minor metadata updates
+#
+# Revision 1.10  2005/03/14 21:17:36  admin
+# fixed to work with more recent perl/tk
+#
 # Revision 1.9  2003/04/08 07:57:13  admin
 # added -wraparound and -bottomcmd/-topcmd callbacks
 #

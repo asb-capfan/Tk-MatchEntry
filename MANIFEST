@@ -4,3 +4,4 @@ MatchEntry.pm
 test.pl
 ChangeLog
 README
+META.yml                                 Module meta-data (added by MakeMaker)
