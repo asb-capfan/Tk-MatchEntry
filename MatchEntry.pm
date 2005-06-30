@@ -1,8 +1,8 @@
 #
 # MatchEntry.pm
 #
-# Revision       : $Revision: 1.11 $
-# Last changed on: $Date: 2005/03/14 21:20:17 $
+# Revision       : $Revision: 1.12 $
+# Last changed on: $Date: 2005/06/30 05:29:28 $
 #
 
 #
@@ -16,7 +16,7 @@ package Tk::MatchEntry;
 
 # Set version information
 use vars qw($VERSION);
-$VERSION = '0.3';
+$VERSION = '0.4';
 
 # Define dependencies
 use strict;
@@ -214,7 +214,7 @@ sub check_choice_case {
     foreach my $choice (@all_choices) { # loop over all choices
         # check whether choice matches text case-insensitively but not
         # case-sensitively
-        if ($text =~ m/^$choice$/i && ($text ne $choice)) {
+        if ($text =~ m/^\Q$choice\E$/i && ($text ne $choice)) {
             # if so, replace the text in the entry widget with the choice
             $entry->delete(0, 'end');
             $entry->insert(0, $choice);
@@ -1596,6 +1596,8 @@ based on it.
 =item Jesse Farinacci for suggesting, specifying and testing the multimatch 
 mode.
 
+=item Ingo Herschmann for bug reports and patches.
+
 =back
 
 =head1 COPYRIGHT
@@ -1610,6 +1612,9 @@ it under the same terms as Perl itself.
 #
 # CVS Changelog:
 # $Log: MatchEntry.pm,v $
+# Revision 1.12  2005/06/30 05:29:28  admin
+# Applied a patch by Ingo Herschmann
+#
 # Revision 1.11  2005/03/14 21:20:17  admin
 # Minor metadata updates
 #

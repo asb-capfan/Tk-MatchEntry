@@ -1,3 +1,10 @@
+0.3 -> 0.4
+----------
+
+* Applied a patch by Ingo Herschmann which fixes a bug with unquoted
+  regexes
+
+
 0.2 -> 0.3
 ----------
 
