@@ -1171,10 +1171,12 @@ Tk::MatchEntry - Entry widget with advanced auto-completion capability
 
 =head1 SYNOPSIS
 
- use Tk::MatchEntry;
-
- $match_entry = $top->MatchEntry(-textvariable => \$var1, 
-                                 -choices => @choices);
+    use Tk::MatchEntry;
+    
+    my $match_entry = $top->MatchEntry(
+        -textvariable => \$var1, 
+        -choices => \@choices,
+    );
 
 =head1 DESCRIPTION
 
@@ -1535,19 +1537,18 @@ C<slistbox> is the C<scrolled> listbox.
 This is a primitive example for Tk::MatchEntry which you can use to get to
 know the look and feel.
 
- use Tk;
+    use Tk;
+    use Tk::MatchEntry;
+    
+    my $mw = MainWindow->new(-title => "MatchEntry Test");
+    
+    my @choices = ( qw/one one.green one.blue one.yellow two.blue two.green
+                    two.cyan three.red three.white three.yellow/ );
+    
+    $mw->Button->pack(-side => 'left');
 
- use Tk::MatchEntry;
-
- my $mw = MainWindow->new(-title => "MatchEntry Test");
-
- my @choices = [ qw/one one.green one.blue one.yellow two.blue two.green
-                    two.cyan three.red three.white three.yellow/ ];
-
- $mw->Button->pack(-side => 'left');
-
- my $me = $mw->MatchEntry(
-        -choices        => @choices,
+    my $me = $mw->MatchEntry(
+        -choices        => \@choices,
         -fixedwidth     => 1, 
         -ignorecase     => 1,
         -maxheight      => 5,
@@ -1556,10 +1557,11 @@ know the look and feel.
         -tabcmd         => sub { print "callback: -tabcmd  \n"; }, 
         -zerocmd        => sub { print "callback: -zerocmd \n"; },
     )->pack(-side => 'left', -padx => 50);
-
- $mw->Button(-text => 'popup', 
-             -command => sub{$me->popup}
-            )->pack(-side => 'left');
+    
+    $mw->Button(
+        -text => 'popup', 
+        -command => sub{$me->popup}
+    )->pack(-side => 'left');
  
  MainLoop;
 
