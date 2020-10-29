@@ -19,11 +19,11 @@ if( $widtrib ) {
 }
 
 Tk::MMutil::TkExtMakefile(
-    NAME          => "Tk::MatchEntry",
-    DISTNAME      => "Tk-MatchEntry",
-    VERSION_FROM  => "MatchEntry.pm",
-    ABSTRACT => 'Entry widget with auto-completion capability',
-    AUTHOR   => 'Wolfgang Hommel (wolf@code-wizards.com)',
-    PM            => {"MatchEntry.pm" => "\$(INST_LIBDIR)/MatchEntry.pm", %widtrib},
-    dist          => {COMPRESS => 'gzip', SUFFIX => 'gz'},
+    'NAME'          => "Tk::MatchEntry",
+    'DISTNAME'      => "Tk-MatchEntry",
+    'VERSION_FROM'  => "MatchEntry.pm",
+    'ABSTRACT'      => 'Entry widget with auto-completion capability',
+    'AUTHOR'        => 'Wolfgang Hommel (wolf@code-wizards.com)',
+    'PM'            => {"MatchEntry.pm" => "\$(INST_LIBDIR)/MatchEntry.pm", %widtrib},
+    'dist'          => {COMPRESS => 'gzip', SUFFIX => 'gz'},
 );
