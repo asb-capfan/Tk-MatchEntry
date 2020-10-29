@@ -1603,7 +1603,7 @@ mode.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2003 - 2005 Wolfgang Hommel. All rights reserved.
+Copyright (c) 2003 - 2020 Wolfgang Hommel. All rights reserved.
 
 This package is free software; you can redistribute it and/or modifiy
 it under the same terms as Perl itself.
