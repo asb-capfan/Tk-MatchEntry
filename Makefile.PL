@@ -24,6 +24,7 @@ MatchEntry.pm
 test.pl
 ChangeLog
 README
+META.yml                                 Module meta-data (added by MakeMaker)
 end-of-manifest
 print MANIFEST "$widtrib\n" if $widtrib;
 close MANIFEST or die $!;
