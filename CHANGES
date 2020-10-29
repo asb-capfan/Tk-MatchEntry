@@ -6,6 +6,7 @@ Release 0.4     2005-06-30
 Release 0.3     2005-03-14
 
 * Added support for current Perl/Tk version. (RT #7351)
+* Minor metadata updates
 
 
 Release 0.2     2003-04-08
@@ -30,4 +31,10 @@ Release 0.2     2003-04-08
 
 Release 0.1     2003-01-30
 
-* initial version
+* Improved support for case-insensitive matching, added 0/1-length callbacks
+* added auto-completion and auto-popup functionality,
+* added callbacks for enter and tab,
+* basic keyboard event bindings done
+* basic entry + listbox functionality added, based on Tk::BrowseEntry source
+* Added POD, added <FocusOut> bind
+* initial version/commit 2003/01/25 10:42:19
