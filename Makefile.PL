@@ -25,7 +25,7 @@ Tk::MMutil::TkExtMakefile(
     'ABSTRACT'      => 'Entry widget with auto-completion capability',
     'AUTHOR'        => 'Wolfgang Hommel (wolf@code-wizards.com)',
     'PM'            => {"MatchEntry.pm" => "\$(INST_LIBDIR)/MatchEntry.pm", %widtrib},
-    'dist'          => {COMPRESS => 'gzip', SUFFIX => 'gz'},
+    'dist'          => {'COMPRESS' => 'gzip', 'SUFFIX' => 'gz'},
     'CONFIGURE_REQUIRES' => {
 		"ExtUtils::MakeMaker" => 6.52,
 		"Tk::MMutil" => 0,
