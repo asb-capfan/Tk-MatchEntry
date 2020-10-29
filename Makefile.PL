@@ -1,7 +1,7 @@
 
-# A generic Makefile.PL file for any pure Perl/Tk mega-widget. Set
-# $pm to the name of the Perl module, and update %widinfo.  Leave
-# $widtrib undefined unless you have an addition for widget's User
+# A generic Makefile.PL file for any pure Perl/Tk mega-widget.
+# Update %widinfo.
+# Leave $widtrib undefined unless you have an addition for widget's User
 # Contributed Demonstrations section.
 #
 # This program creates the MANIFEST and test.pl files, then invokes
@@ -9,17 +9,16 @@
 
 use v5.5;
 use Tk::MMutil;
-use vars qw/$pm $widinfo $widtrib %widtrib/;
+use vars qw/$widinfo $widtrib %widtrib/;
 
-$pm = 'MatchEntry';		# widget Class name
 # $widtrib = 'metest.pl';	# widtrib demo file name
 
-print "Writing MANIFEST for Tk::$pm\n";
+print "Writing MANIFEST for Tk::MatchEntry\n";
 open MANIFEST, ">MANIFEST" or die "Cannot open MANIFEST: $!";
 print MANIFEST <<"end-of-manifest";
 MANIFEST
 Makefile.PL
-$pm.pm
+MatchEntry.pm
 test.pl
 ChangeLog
 README
@@ -27,10 +26,10 @@ end-of-manifest
 print MANIFEST "$widtrib\n" if $widtrib;
 close MANIFEST or die $!;
 
-print "Writing test.pl for Tk::$pm\n";
+print "Writing test.pl for Tk::MatchEntry\n";
 open TEST, ">test.pl" or die "Cannot open test.pl: $!";
 while (<DATA>) {
-    s/NavListbox/$pm/o;
+    s/NavListbox/MatchEntry/o;
     print TEST;
 }
 close TEST or die $!;
@@ -39,12 +38,12 @@ close TEST or die $!;
   ($widtrib => "\$(INST_ARCHLIB)/Tk/demos/widtrib/$widtrib") if $widtrib;
 
 Tk::MMutil::TkExtMakefile(
-    NAME          => "Tk::$pm",
-    DISTNAME      => "Tk-$pm",
-    VERSION_FROM  => "$pm.pm",
+    NAME          => "Tk::MatchEntry",
+    DISTNAME      => "Tk-MatchEntry",
+    VERSION_FROM  => "MatchEntry.pm",
     ABSTRACT => 'Entry widget with auto-completion capability',
     AUTHOR   => 'Wolfgang Hommel (wolf@code-wizards.com)',
-    PM            => {"$pm.pm" => "\$(INST_LIBDIR)/$pm.pm", %widtrib},
+    PM            => {"MatchEntry.pm" => "\$(INST_LIBDIR)/MatchEntry.pm", %widtrib},
     dist          => {COMPRESS => 'gzip', SUFFIX => 'gz'},
 );
 __DATA__
