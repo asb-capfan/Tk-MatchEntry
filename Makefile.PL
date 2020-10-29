@@ -26,6 +26,9 @@ Tk::MMutil::TkExtMakefile(
     'AUTHOR'        => 'Wolfgang Hommel (wolf@code-wizards.com)',
     'PM'            => {"MatchEntry.pm" => "\$(INST_LIBDIR)/MatchEntry.pm", %widtrib},
     'dist'          => {'COMPRESS' => 'gzip', 'SUFFIX' => 'gz'},
+    'PREREQ_PM'  => {
+        'Tk' => 800.022,
+    },
     'CONFIGURE_REQUIRES' => {
 		"ExtUtils::MakeMaker" => 6.52,
 		"Tk::MMutil" => 0,
