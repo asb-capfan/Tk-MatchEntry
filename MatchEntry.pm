@@ -1,11 +1,4 @@
 #
-# MatchEntry.pm
-#
-# Revision       : $Revision: 1.12 $
-# Last changed on: $Date: 2005/06/30 05:29:28 $
-#
-
-#
 # MatchEntry is an entry widget with auto-completion capabilities. It attempts
 # to fill the gap in functionality between Tk::BrowseEntry and Tk::HistEntry
 # with focus on user-friendliness concerning the auto-completion.
