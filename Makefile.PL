@@ -30,4 +30,14 @@ Tk::MMutil::TkExtMakefile(
 		"ExtUtils::MakeMaker" => 6.52,
 		"Tk::MMutil" => 0,
 	},
+    'META_MERGE' => {
+		"meta-spec" => { version => 2 },
+		resources => {
+			repository => {
+				type => 'git',
+				url => 'https://github.com/asb-capfan/Tk-MatchEntry.git',
+				web => 'https://github.com/asb-capfan/Tk-MatchEntry',
+			},
+		},
+	},
 );
