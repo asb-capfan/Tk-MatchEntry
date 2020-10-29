@@ -12,10 +12,6 @@ use Tk::MMutil;
 use vars qw/$pm $widinfo $widtrib %widtrib/;
 
 $pm = 'MatchEntry';		# widget Class name
-%widinfo = (			# PPM widget information
-    ABSTRACT => 'Entry widget with auto-completion capability',
-    AUTHOR   => 'Wolfgang Hommel (wolf@code-wizards.com)',
-);
 # $widtrib = 'metest.pl';	# widtrib demo file name
 
 print "Writing MANIFEST for Tk::$pm\n";
@@ -46,9 +42,10 @@ Tk::MMutil::TkExtMakefile(
     NAME          => "Tk::$pm",
     DISTNAME      => "Tk-$pm",
     VERSION_FROM  => "$pm.pm",
+    ABSTRACT => 'Entry widget with auto-completion capability',
+    AUTHOR   => 'Wolfgang Hommel (wolf@code-wizards.com)',
     PM            => {"$pm.pm" => "\$(INST_LIBDIR)/$pm.pm", %widtrib},
     dist          => {COMPRESS => 'gzip', SUFFIX => 'gz'},
-    ($] >= 5.005 ? %widinfo  : ()),
 );
 __DATA__
 #!perl -w
