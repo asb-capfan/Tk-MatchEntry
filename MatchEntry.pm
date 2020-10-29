@@ -1575,13 +1575,11 @@ The following widgets are similar to I<Tk::MatchEntry> to a certain extent:
 
 =over 4
 
-=item I<Tk::BrowseEntry>
+=item L<Tk::BrowseEntry>
 
-=item I<Tk::HistEntry> 
+=item L<Tk::HistEntry> 
 
-=item I<Tk::JBrowseEntry>
-
-=item I<Tk::SelectionEntry>
+=item L<Tk::JBrowseEntry>
 
 =back
 
