@@ -16,8 +16,8 @@ use strict;
 use Tk qw(Ev);
 use Carp;
 # use Data::Dumper;   # for debugging
-require Tk::Frame;
-require Tk::LabEntry;
+use Tk::Frame;
+use Tk::LabEntry;
 
 # Construct widget
 use base qw(Tk::Frame);
