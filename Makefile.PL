@@ -7,6 +7,8 @@
 # This program creates the MANIFEST and test.pl files, then invokes
 # MakeMaker to create the Makefile.  sol0@Lehigh.EDU, 2001/01/01
 
+use strict;
+use warnings;
 use v5.5;
 use Tk::MMutil;
 use vars qw/$widinfo $widtrib %widtrib/;
