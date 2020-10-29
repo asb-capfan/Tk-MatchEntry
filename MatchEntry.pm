@@ -15,7 +15,7 @@
 package Tk::MatchEntry;
 
 # Set version information
-out $VERSION = '0.4';
+our $VERSION = '0.4';
 
 # Define dependencies
 use strict;
