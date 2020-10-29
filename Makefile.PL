@@ -14,9 +14,9 @@ use Tk::MMutil;
 use vars qw/$widinfo $widtrib %widtrib/;
 
 # $widtrib = 'metest.pl';	# widtrib demo file name
-
-%widtrib = 
-  ($widtrib => "\$(INST_ARCHLIB)/Tk/demos/widtrib/$widtrib") if $widtrib;
+if( $widtrib ) {
+    %widtrib = ($widtrib => "\$(INST_ARCHLIB)/Tk/demos/widtrib/$widtrib");
+}
 
 Tk::MMutil::TkExtMakefile(
     NAME          => "Tk::MatchEntry",
