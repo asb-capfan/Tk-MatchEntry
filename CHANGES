@@ -1,3 +1,13 @@
+Release 0.5     2020-10-29
+
+* added code to Github repo
+* reworked Makefile.PL to reduce Makefile complexity and make dependencies known
+* fix RT #14054: documentation issues, incl.  sample code
+* fix RT #130554: Undeclared configure_requires dependency Tk::MMutil
+* improve POD and README
+* minor code updates (replace use vars, use strict in Makefile)
+
+
 Release 0.4     2005-06-30
 
 * Applied a patch by Ingo Herschmann which fixes a bug with unquoted regexes
