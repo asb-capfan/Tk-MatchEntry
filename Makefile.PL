@@ -15,20 +15,6 @@ use vars qw/$widinfo $widtrib %widtrib/;
 
 # $widtrib = 'metest.pl';	# widtrib demo file name
 
-print "Writing MANIFEST for Tk::MatchEntry\n";
-open MANIFEST, ">MANIFEST" or die "Cannot open MANIFEST: $!";
-print MANIFEST <<"end-of-manifest";
-MANIFEST
-Makefile.PL
-MatchEntry.pm
-test.pl
-ChangeLog
-README
-META.yml                                 Module meta-data (added by MakeMaker)
-end-of-manifest
-print MANIFEST "$widtrib\n" if $widtrib;
-close MANIFEST or die $!;
-
 %widtrib = 
   ($widtrib => "\$(INST_ARCHLIB)/Tk/demos/widtrib/$widtrib") if $widtrib;
 
