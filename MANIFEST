@@ -1,7 +1,7 @@
-MANIFEST
-Makefile.PL
-MatchEntry.pm
-test.pl
 CHANGES
+Makefile.PL
+MANIFEST
+MatchEntry.pm
+META.yml			Module meta-data (added by MakeMaker)
 README
-META.yml                                 Module meta-data (added by MakeMaker)
+test.pl
