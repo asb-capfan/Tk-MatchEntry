@@ -2,6 +2,6 @@ MANIFEST
 Makefile.PL
 MatchEntry.pm
 test.pl
-ChangeLog
+CHANGES
 README
 META.yml                                 Module meta-data (added by MakeMaker)

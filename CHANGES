@@ -1,18 +1,14 @@
-0.3 -> 0.4
-----------
+Release 0.4     2005-06-30
 
-* Applied a patch by Ingo Herschmann which fixes a bug with unquoted
-  regexes
+* Applied a patch by Ingo Herschmann which fixes a bug with unquoted regexes
 
 
-0.2 -> 0.3
-----------
+Release 0.3     2005-03-14
 
 * Added support for current Perl/Tk version.
 
 
-0.1 -> 0.2
-----------
+Release 0.2     2003-04-08
 
 * Added multi-match mode which allows auto-completion on a per-word 
   base instead of the all-or-nothing auto-completion in regular mode.
@@ -29,6 +25,9 @@
   and "-topcmd", which are called if the user presses cursor-down
   while being already at bottom of the listbox, or presses
   cursor-up while being at the top entry already, respectively.
+* Please have a look at the documentation for details and examples.
 
-Please have a look at the documentation for details and examples.
 
+Release 0.1     2003-01-30
+
+* initial version
